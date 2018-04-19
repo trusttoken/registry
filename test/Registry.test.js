@@ -5,7 +5,7 @@ const RegistryAccessManagerMock = artifacts.require('RegistryAccessManagerMock')
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const prop1 = "foo"
     const prop2 = "bar"
-    const writePermissionTag = "canWriteTo"
+    const writePermissionTag = "canWriteTo-"
 
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })

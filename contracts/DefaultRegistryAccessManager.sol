@@ -3,9 +3,12 @@ pragma solidity ^0.4.21;
 import "./Registry.sol";
 import "./RegistryAccessManager.sol";
 
-contract RegistryAccessManagerImpl is RegistryAccessManager {
-    string public constant WRITE_PERMISSION = "canWriteTo";
+contract DefaultRegistryAccessManager is RegistryAccessManager {
+    string public constant WRITE_PERMISSION = "canWriteTo-";
 
+    // Allows a write if either a) the writer is that Registry's owner, or
+    // b) the writer is writing to attribute foo and that writer already has
+    // the canWriteTo-foo attribute set (in that same Registry)
     function confirmWrite(address /*_who*/, string _attribute, uint256 /*_value*/, address _admin) public returns (bool) {
         Registry client = Registry(msg.sender);
         return (_admin == client.owner() || client.hasAttribute(_admin, strConcat(WRITE_PERMISSION, _attribute)));
