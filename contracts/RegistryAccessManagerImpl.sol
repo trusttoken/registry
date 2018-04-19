@@ -7,7 +7,8 @@ contract RegistryAccessManagerImpl is RegistryAccessManager {
     string public constant WRITE_PERMISSION = "canWriteTo";
 
     function confirmWrite(address /*_who*/, string _attribute, uint256 /*_value*/, address _admin) public returns (bool) {
-        return Registry(msg.sender).hasAttribute(_admin, strConcat(WRITE_PERMISSION, _attribute));
+        Registry client = Registry(msg.sender);
+        return (_admin == client.owner() || client.hasAttribute(_admin, strConcat(WRITE_PERMISSION, _attribute)));
     }
 
     // Based on https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.5.sol#L830

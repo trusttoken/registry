@@ -22,7 +22,7 @@ contract Registry is Claimable {
     event SetManager(address indexed oldManager, address indexed newManager);
 
     function setAttribute(address _who, string _attribute, uint256 _value) public {
-        require(msg.sender == owner || accessManager.confirmWrite(_who, _attribute, _value, msg.sender));
+        require(accessManager.confirmWrite(_who, _attribute, _value, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, msg.sender);
     }
