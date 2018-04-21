@@ -4,7 +4,6 @@ import "zeppelin-solidity/contracts/ownership/Claimable.sol";
 import "./DefaultRegistryAccessManager.sol";
 import "./RegistryAccessManager.sol";
 
-// inspired by https://github.com/TPL-protocol/tpl-contracts/blob/971513532bab847f4d1f7d312e2236f8f6d06a35/contracts/Jurisdiction.sol
 contract Registry is Claimable {
     struct AttributeData {
         uint256 value;

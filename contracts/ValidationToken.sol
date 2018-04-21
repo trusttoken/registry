@@ -3,14 +3,14 @@ pragma solidity ^0.4.21;
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-/* The goal of this token is to allow users to prove that they
- 1) own their ethereum account
- 2) can use that account to trade ERC20 tokens
- To that end, *every* address initially starts out with 10000 tokens,
- and this contract supports transfer but not transferFrom. A simpler contract
- that does not track balances at all could serve this purpose, but this
- contract may be less confusing to users (and/or smart wallets) since it behaves
- rather like a normal ERC20 token. */
+// The goal of this token is to allow users to prove that they
+// 1) own their ethereum account
+// 2) can use that account to trade ERC20 tokens
+// To that end, *every* address initially starts out with 10000 tokens,
+// and this contract supports transfer but not transferFrom. A simpler contract
+// that does not track balances at all could serve this purpose, but this
+// contract may be less confusing to users (and/or smart wallets) since it behaves
+// rather like a normal ERC20 token.
 contract ValidationToken is ERC20 {
     string public name = "Validation Token";
     string public symbol = "VTKN";
