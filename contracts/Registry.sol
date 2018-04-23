@@ -12,8 +12,8 @@ contract Registry is Claimable {
     }
 
     // Stores arbitrary attributes for users. An example use case is an ERC20
-    // token that requires its users to go through a KYC process - in this case
-    // a validator can set an account's "hasPassedKYC" attribute to 1 to indicate
+    // token that requires its users to go through a KYC/AML check - in this case
+    // a validator can set an account's "hasPassedKYC/AML" attribute to 1 to indicate
     // that account can use the token. This mapping stores that value (1, in the
     // example) as well as which validator last set the value and at what time,
     // so that e.g. the check can be renewed at appropriate intervals.

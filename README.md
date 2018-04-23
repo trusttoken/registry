@@ -11,7 +11,7 @@ see the relevant .sol files.
 ### Registry.sol
 
 Stores arbitrary attributes for users, such as whether they have
-passed a KYC process.
+passed a KYC/AML check.
 
 ### RegistryAccessManager.sol
 
