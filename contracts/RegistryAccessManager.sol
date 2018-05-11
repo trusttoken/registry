@@ -6,5 +6,5 @@ import "./Registry.sol";
 contract RegistryAccessManager {
     // Called when _admin attempts to write _value for _who's _attribute.
     // Returns true if the write is allowed to proceed.
-    function confirmWrite(address _who, string _attribute, uint256 _value, address _admin) public returns (bool);
+    function confirmWrite(address _who, string _attribute, uint256 _value, string _notes, address _admin) public returns (bool);
 }

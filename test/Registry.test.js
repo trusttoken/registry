@@ -5,6 +5,7 @@ const RegistryAccessManagerMock = artifacts.require('RegistryAccessManagerMock')
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const prop1 = "foo"
     const prop2 = "bar"
+    const notes = "blarg"
     const writePermissionTag = "canWriteTo-"
 
     beforeEach(async function () {
@@ -13,17 +14,18 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
 
     describe('read/write', function () {
         it('works for owner', async function () {
-            const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, { from: owner })
+            const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: owner })
             const attr = await this.registry.getAttribute(anotherAccount, prop1)
             assert.equal(attr[0], 3)
-            assert.equal(attr[1], owner)
-            assert.equal(attr[2], web3.eth.getBlock(receipt.blockNumber).timestamp)
+            assert.equal(attr[1], notes)
+            assert.equal(attr[2], owner)
+            assert.equal(attr[3], web3.eth.getBlock(receipt.blockNumber).timestamp)
             const hasAttr = await this.registry.hasAttribute(anotherAccount, prop1)
             assert.equal(hasAttr, true)
         })
 
         it('sets only desired attribute', async function () {
-            const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, { from: owner })
+            const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: owner })
             const attr = await this.registry.getAttribute(anotherAccount, prop2)
             assert.equal(attr[0], 0)
             assert.equal(attr[1], 0)
@@ -33,28 +35,29 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
 
         it('emits an event', async function () {
-            const { logs } = await this.registry.setAttribute(anotherAccount, prop1, 3, { from: owner })
+            const { logs } = await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: owner })
 
             assert.equal(logs.length, 1)
             assert.equal(logs[0].event, 'SetAttribute')
             assert.equal(logs[0].args.who, anotherAccount)
             assert.equal(logs[0].args.attribute, prop1)
             assert.equal(logs[0].args.value, 3)
+            assert.equal(logs[0].args.notes, notes)
             assert.equal(logs[0].args.adminAddr, owner)
         })
 
         it('cannot be called by random non-owner', async function () {
-            await assertRevert(this.registry.setAttribute(anotherAccount, prop1, 3, { from: oneHundred }))
+            await assertRevert(this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: oneHundred }))
         })
 
         it('owner can let others write', async function () {
-            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, { from: owner })
-            await this.registry.setAttribute(anotherAccount, prop1, 3, { from: oneHundred })
+            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, notes, { from: owner })
+            await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: oneHundred })
         })
 
         it('others can only write what they are allowed to', async function () {
-            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, { from: owner })
-            await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, { from: oneHundred }))
+            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, notes, { from: owner })
+            await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
         })
     })
 

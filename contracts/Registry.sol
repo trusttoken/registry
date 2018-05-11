@@ -1,12 +1,13 @@
 pragma solidity ^0.4.21;
 
-import "zeppelin-solidity/contracts/ownership/Claimable.sol";
+import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
 import "./DefaultRegistryAccessManager.sol";
 import "./RegistryAccessManager.sol";
 
 contract Registry is Claimable {
     struct AttributeData {
         uint256 value;
+        string notes;
         address adminAddr;
         uint256 timestamp;
     }
@@ -26,14 +27,14 @@ contract Registry is Claimable {
         accessManager = new DefaultRegistryAccessManager();
     }
 
-    event SetAttribute(address indexed who, string attribute, uint256 value, address indexed adminAddr);
+    event SetAttribute(address indexed who, string attribute, uint256 value, string notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
     // Writes are allowed only if the accessManager approves
-    function setAttribute(address _who, string _attribute, uint256 _value) public {
-        require(accessManager.confirmWrite(_who, _attribute, _value, msg.sender));
-        attributes[_who][_attribute] = AttributeData(_value, msg.sender, block.timestamp);
-        emit SetAttribute(_who, _attribute, _value, msg.sender);
+    function setAttribute(address _who, string _attribute, uint256 _value, string _notes) public {
+        require(accessManager.confirmWrite(_who, _attribute, _value, _notes, msg.sender));
+        attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
+        emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
@@ -42,9 +43,9 @@ contract Registry is Claimable {
     }
 
     // Returns the exact value of the attribute, as well as its metadata
-    function getAttribute(address _who, string _attribute) public view returns (uint256, address, uint256) {
+    function getAttribute(address _who, string _attribute) public view returns (uint256, string, address, uint256) {
         AttributeData memory data = attributes[_who][_attribute];
-        return (data.value, data.adminAddr, data.timestamp);
+        return (data.value, data.notes, data.adminAddr, data.timestamp);
     }
 
     function setManager(RegistryAccessManager _accessManager) public onlyOwner {
