@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
 import "./DefaultRegistryAccessManager.sol";
@@ -23,7 +23,7 @@ contract Registry is Claimable {
     // this accessManager, so that it may be replaced by the owner as needed
     RegistryAccessManager public accessManager;
 
-    function Registry() public {
+    constructor() public {
         accessManager = new DefaultRegistryAccessManager();
     }
 
