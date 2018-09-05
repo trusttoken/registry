@@ -1,6 +1,8 @@
 import assertRevert from './helpers/assertRevert'
 const Registry = artifacts.require('Registry')
 const RegistryAccessManagerMock = artifacts.require('RegistryAccessManagerMock')
+const MockToken = artifacts.require("MockToken")
+const ForceEther = artifacts.require("ForceEther")
 
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const prop1 = "foo"
@@ -86,5 +88,34 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         it('cannot be called by non-owner', async function () {
             await assertRevert(this.registry.setManager(this.manager.address, { from: anotherAccount }))
         })
+    })
+    describe('no ether and no tokens', function () {
+        beforeEach(async function () {
+            this.token = await MockToken.new( this.registry.address, 100, { from: owner })
+        })
+
+        it ('owner can transfer out token in the contract address ',async function(){
+            await this.registry.reclaimToken(this.token.address, owner, { from: owner })
+        })
+
+        it('cannot transfer ether to contract address',async function(){
+            await assertRevert(this.registry.send(10, {from: owner}))
+        })
+
+        it ('owner can transfer out ether in the contract address',async function(){
+            const emptyAddress = "0x5fef93e79a73b28a9113a618aabf84f2956eb3ba"
+            const emptyAddressBalance = web3.fromWei(web3.eth.getBalance(emptyAddress), 'ether').toNumber()
+
+            const forceEther = await ForceEther.new({ from: owner, value: "10000000000000000000" })
+            await forceEther.destroyAndSend(this.registry.address, { from: owner })
+            const registryInitialWithForcedEther = web3.fromWei(web3.eth.getBalance(this.registry.address), 'ether').toNumber()
+            await this.registry.reclaimEther(emptyAddress, { from: owner })
+            const registryFinalBalance = web3.fromWei(web3.eth.getBalance(this.registry.address), 'ether').toNumber()
+            const emptyAddressFinalBalance = web3.fromWei(web3.eth.getBalance(emptyAddress), 'ether').toNumber()
+            assert.equal(registryInitialWithForcedEther,10)
+            assert.equal(registryFinalBalance,0)
+            assert.equal(emptyAddressFinalBalance,10)
+        })
+
     })
 })
