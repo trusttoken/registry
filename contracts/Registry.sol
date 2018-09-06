@@ -1,5 +1,6 @@
 pragma solidity ^0.4.23;
 
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
 import "./DefaultRegistryAccessManager.sol";
 import "./RegistryAccessManager.sol";
@@ -30,6 +31,9 @@ contract Registry is Claimable {
     event SetAttribute(address indexed who, string attribute, uint256 value, string notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
+    function() external {
+    }
+
     // Writes are allowed only if the accessManager approves
     function setAttribute(address _who, string _attribute, uint256 _value, string _notes) public {
         require(accessManager.confirmWrite(_who, _attribute, _value, _notes, msg.sender));
@@ -51,5 +55,14 @@ contract Registry is Claimable {
     function setManager(RegistryAccessManager _accessManager) public onlyOwner {
         emit SetManager(accessManager, _accessManager);
         accessManager = _accessManager;
+    }
+
+    function reclaimEther(address _to) external onlyOwner {
+        _to.transfer(address(this).balance);
+    }
+
+    function reclaimToken(ERC20 token, address _to) external onlyOwner {
+        uint256 balance = token.balanceOf(this);
+        assert(token.transfer(_to, balance));
     }
 }
