@@ -23,6 +23,9 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             assert.equal(attr[3], web3.eth.getBlock(receipt.blockNumber).timestamp)
             const hasAttr = await this.registry.hasAttribute(anotherAccount, prop1)
             assert.equal(hasAttr, true)
+            const value = await this.registry.getAttributeValue(anotherAccount, prop1)
+            assert.equal(Number(value),3)
+
         })
 
         it('sets only desired attribute', async function () {
