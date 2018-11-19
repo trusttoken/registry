@@ -13,13 +13,12 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
     })
-
     describe('read/write', function () {
         it('works for owner', async function () {
             const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: owner })
             const attr = await this.registry.getAttribute(anotherAccount, prop1)
             assert.equal(attr[0], 3)
-            assert.equal(attr[1], notes)
+            assert.equal(web3.toUtf8(attr[1]), notes)
             assert.equal(attr[2], owner)
             assert.equal(attr[3], web3.eth.getBlock(receipt.blockNumber).timestamp)
             const hasAttr = await this.registry.hasAttribute(anotherAccount, prop1)
@@ -30,7 +29,7 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             const { receipt } = await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: owner })
             const attr = await this.registry.getAttribute(anotherAccount, prop2)
             assert.equal(attr[0], 0)
-            assert.equal(attr[1], 0)
+            assert.equal(attr[1], '0x0000000000000000000000000000000000000000000000000000000000000000')
             assert.equal(attr[2], 0)
             const hasAttr = await this.registry.hasAttribute(anotherAccount, prop2)
             assert.equal(hasAttr, false)
@@ -44,7 +43,7 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             assert.equal(logs[0].args.who, anotherAccount)
             assert.equal(logs[0].args.attribute, prop1)
             assert.equal(logs[0].args.value, 3)
-            assert.equal(logs[0].args.notes, notes)
+            assert.equal(web3.toUtf8(logs[0].args.notes), notes)
             assert.equal(logs[0].args.adminAddr, owner)
         })
 
@@ -99,7 +98,11 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
 
         it('cannot transfer ether to contract address',async function(){
-            await assertRevert(this.registry.send(10, {from: owner}))
+            await assertRevert(this.registry.sendTransaction({ 
+                value: 33, 
+                from: owner, 
+                gas: 300000 
+             }));         
         })
 
         it ('owner can transfer out ether in the contract address',async function(){
