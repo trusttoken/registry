@@ -7,7 +7,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract DefaultRegistryAccessManager is RegistryAccessManager {
     using SafeMath for uint256;
 
-    bytes32 public constant WRITE_PERMISSION = keccak("canWriteTo-");
+    bytes32 public constant WRITE_PERMISSION = keccak256("canWriteTo-");
 
     // Allows a write if either a) the writer is that Registry's owner, or
     // b) the writer is writing to attribute foo and that writer already has
