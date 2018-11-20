@@ -17,7 +17,7 @@ contract Registry is Claimable {
     // that account can use the token. This mapping stores that value (1, in the
     // example) as well as which validator last set the value and at what time,
     // so that e.g. the check can be renewed at appropriate intervals.
-    mapping(address => mapping(bytes32 => AttributeData)) private attributes;
+    mapping(address => mapping(bytes32 => AttributeData)) public attributes;
     // The logic governing who is allowed to set what attributes is abstracted as
     // this accessManager, so that it may be replaced by the owner as needed
 
@@ -55,14 +55,46 @@ contract Registry is Claimable {
         return attributes[_who][_attribute].value != 0;
     }
 
-    function getAttributeValue(address _who, bytes32 _attribute) public view returns (uint256 _value) {
-        _value = attributes[_who][_attribute].value;
+    function hasBothAttributes(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
+        return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value != 0;
+    }
+
+    function bothHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
+        return attributes[_who1][_attribute].value != 0 && attributes[_who2][_attribute].value != 0;
+    }
+    
+    function eitherHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
+        return attributes[_who1][_attribute].value != 0 || attributes[_who2][_attribute].value != 0;
+    }
+
+    function haveAttributes(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
+        return attributes[_who1][_attribute1].value != 0 && attributes[_who2][_attribute2].value != 0;
+    }
+
+    function haveEitherAttribute(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
+        return attributes[_who1][_attribute1].value != 0 || attributes[_who2][_attribute2].value != 0;
     }
 
     // Returns the exact value of the attribute, as well as its metadata
     function getAttribute(address _who, bytes32 _attribute) public view returns (uint256, bytes32, address, uint256) {
         AttributeData memory data = attributes[_who][_attribute];
         return (data.value, data.notes, data.adminAddr, data.timestamp);
+    }
+
+    function getAttributeValue(address _who, bytes32 _attribute) public view returns (uint256 _value) {
+        _value = attributes[_who][_attribute].value;
+    }
+
+    function getAttributeNotes(address _who, bytes32 _attribute) public view returns (bytes32) {
+        return attributes[_who][_attribute].notes;
+    }
+
+    function getAttributeAdminAddr(address _who, bytes32 _attribute) public view returns (address) {
+        return attributes[_who][_attribute].adminAddr;
+    }
+
+    function getAttributeTimestamp(address _who, bytes32 _attribute) public view returns (uint256) {
+        return attributes[_who][_attribute].timestamp;
     }
 
     function reclaimEther(address _to) external onlyOwner {
