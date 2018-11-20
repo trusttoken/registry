@@ -31,11 +31,16 @@ contract Registry is Claimable {
     event SetManager(address indexed oldManager, address indexed newManager);
 
 
+    function writeAttributeFor(bytes32 _attribute)
+    public pure returns (bytes32) {
+        return keccak256(WRITE_PERMISSION ^ _attribute);
+    }
+
     // Allows a write if either a) the writer is that Registry's owner, or
     // b) the writer is writing to attribute foo and that writer already has
     // the canWriteTo-foo attribute set (in that same Registry)
     function confirmWrite(address /*_who*/, bytes32 _attribute, uint256 /*_value*/, bytes32 /*_notes*/, address _admin) public returns (bool) {
-        return (_admin == owner || hasAttribute(_admin, WRITE_PERMISSION ^ _attribute));
+        return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
     }
 
     // Writes are allowed only if the accessManager approves
