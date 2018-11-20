@@ -44,7 +44,7 @@ contract Registry is Claimable {
     }
 
     function getAttributeValue(address _who, string _attribute) public view returns (uint256 _value) {
-        _value = attributes[_who][_attribute];
+        _value = attributes[_who][_attribute].value;
     }
 
     // Returns the exact value of the attribute, as well as its metadata
