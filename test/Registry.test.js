@@ -5,10 +5,10 @@ const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
 
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
-    const prop1 = "foo"
+    const prop1 = web3.sha3("foo")
     const prop2 = "bar"
     const notes = "blarg"
-    const writePermissionTag = "canWriteTo-"
+    const canWriteProp1 = "0xb6e46a64b8cca9f5f4dcd34ff27fac5267998e4bde07acc0f7e58fcb9562959e"
 
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
@@ -55,12 +55,12 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
 
         it('owner can let others write', async function () {
-            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, notes, { from: owner })
+            await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: oneHundred })
         })
 
         it('others can only write what they are allowed to', async function () {
-            await this.registry.setAttribute(oneHundred, writePermissionTag+prop1, 3, notes, { from: owner })
+            await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
         })
     })
