@@ -5,12 +5,9 @@ const ForceEther = artifacts.require("ForceEther")
 const BN = require('bn.js')
 
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
+    const prop1 = web3.sha3("foo")
     const prop2 = "bar"
     const notes = "blarg"
-    const prop1 = web3.sha3("foo")
-    var prop1BN = new BN(prop1);
-    const writePermissionTag = web3.sha3("canWriteTo-")
-    const canWriteProp1 = web3.sha3(prop1BN.xor(new BN(writePermissionTag)).toString(16))
     
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
@@ -46,7 +43,7 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             assert.equal(logs.length, 1)
             assert.equal(logs[0].event, 'SetAttribute')
             assert.equal(logs[0].args.who, anotherAccount)
-            assert.equal(web3.toUtf8(logs[0].args.attribute), prop1)
+            assert.equal(logs[0].args.attribute, prop1)
             assert.equal(logs[0].args.value, 3)
             assert.equal(web3.toUtf8(logs[0].args.notes), notes)
             assert.equal(logs[0].args.adminAddr, owner)
@@ -57,11 +54,13 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
 
         it('owner can let others write', async function () {
+            const canWriteProp1 = await this.registry.writeAttributeFor(prop1);
             await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: oneHundred })
         })
 
         it('others can only write what they are allowed to', async function () {
+            const canWriteProp1 = await this.registry.writeAttributeFor(prop1);
             await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
         })
