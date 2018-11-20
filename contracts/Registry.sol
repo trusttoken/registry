@@ -2,8 +2,6 @@ pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
-import "./DefaultRegistryAccessManager.sol";
-import "./RegistryAccessManager.sol";
 
 contract Registry is Claimable {
     struct AttributeData {
@@ -19,43 +17,47 @@ contract Registry is Claimable {
     // that account can use the token. This mapping stores that value (1, in the
     // example) as well as which validator last set the value and at what time,
     // so that e.g. the check can be renewed at appropriate intervals.
-    mapping(address => mapping(string => AttributeData)) private attributes;
+    mapping(address => mapping(bytes32 => AttributeData)) private attributes;
     // The logic governing who is allowed to set what attributes is abstracted as
     // this accessManager, so that it may be replaced by the owner as needed
-    RegistryAccessManager public accessManager;
+
+
+    bytes32 public constant WRITE_PERMISSION = keccak256("canWriteTo-");
 
     constructor() public {
-        accessManager = new DefaultRegistryAccessManager();
     }
 
-    event SetAttribute(address indexed who, string attribute, uint256 value, bytes32 notes, address indexed adminAddr);
+    event SetAttribute(address indexed who, bytes32 attribute, uint256 value, bytes32 notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
+
+    // Allows a write if either a) the writer is that Registry's owner, or
+    // b) the writer is writing to attribute foo and that writer already has
+    // the canWriteTo-foo attribute set (in that same Registry)
+    function confirmWrite(address /*_who*/, bytes32 _attribute, uint256 /*_value*/, bytes32 /*_notes*/, address _admin) public returns (bool) {
+        return (_admin == owner || hasAttribute(_admin, WRITE_PERMISSION ^ _attribute));
+    }
+
     // Writes are allowed only if the accessManager approves
-    function setAttribute(address _who, string _attribute, uint256 _value, bytes32 _notes) public {
-        require(accessManager.confirmWrite(_who, _attribute, _value, _notes, msg.sender));
+    function setAttribute(address _who, bytes32 _attribute, uint256 _value, bytes32 _notes) public {
+        require(confirmWrite(_who, _attribute, _value, _notes, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
-    function hasAttribute(address _who, string _attribute) public view returns (bool) {
+    function hasAttribute(address _who, bytes32 _attribute) public view returns (bool) {
         return attributes[_who][_attribute].value != 0;
     }
 
-    function getAttributeValue(address _who, string _attribute) public view returns (uint256 _value) {
-        _value = attributes[_who][_attribute];
+    function getAttributeValue(address _who, bytes32 _attribute) public view returns (uint256 _value) {
+        _value = attributes[_who][_attribute].value;
     }
 
     // Returns the exact value of the attribute, as well as its metadata
-    function getAttribute(address _who, string _attribute) public view returns (uint256, bytes32, address, uint256) {
+    function getAttribute(address _who, bytes32 _attribute) public view returns (uint256, bytes32, address, uint256) {
         AttributeData memory data = attributes[_who][_attribute];
         return (data.value, data.notes, data.adminAddr, data.timestamp);
-    }
-
-    function setManager(RegistryAccessManager _accessManager) public onlyOwner {
-        emit SetManager(accessManager, _accessManager);
-        accessManager = _accessManager;
     }
 
     function reclaimEther(address _to) external onlyOwner {
