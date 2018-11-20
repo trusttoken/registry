@@ -3,12 +3,14 @@ const Registry = artifacts.require('Registry')
 const RegistryAccessManagerMock = artifacts.require('RegistryAccessManagerMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
+const BN = require('bn.js')
 
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
-    const prop1 = web3.sha3("foo")
     const prop2 = "bar"
     const notes = "blarg"
-    const canWriteProp1 = "0xb6e46a64b8cca9f5f4dcd34ff27fac5267998e4bde07acc0f7e58fcb9562959e"
+    const prop1 = web3.sha3("foo")
+    var prop1BN = new BN(prop1);
+    const canWriteProp1 = web3.sha3(prop1BN.xor(new BN(web3.sha3("canWriteTo-"))).toString(16))
 
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
