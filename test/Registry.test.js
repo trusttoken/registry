@@ -1,6 +1,5 @@
 import assertRevert from './helpers/assertRevert'
 const Registry = artifacts.require('Registry')
-const RegistryAccessManagerMock = artifacts.require('RegistryAccessManagerMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
 const BN = require('bn.js')
@@ -10,8 +9,9 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const notes = "blarg"
     const prop1 = web3.sha3("foo")
     var prop1BN = new BN(prop1);
-    const canWriteProp1 = web3.sha3(prop1BN.xor(new BN(web3.sha3("canWriteTo-"))).toString(16))
-
+    const writePermissionTag = web3.sha3("canWriteTo-")
+    const canWriteProp1 = web3.sha3(prop1BN.xor(new BN(writePermissionTag)).toString(16))
+    
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
     })
@@ -46,7 +46,7 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             assert.equal(logs.length, 1)
             assert.equal(logs[0].event, 'SetAttribute')
             assert.equal(logs[0].args.who, anotherAccount)
-            assert.equal(logs[0].args.attribute, prop1)
+            assert.equal(web3.toUtf8(logs[0].args.attribute), prop1)
             assert.equal(logs[0].args.value, 3)
             assert.equal(web3.toUtf8(logs[0].args.notes), notes)
             assert.equal(logs[0].args.adminAddr, owner)
@@ -67,32 +67,6 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
     })
 
-    describe('set manager', function () {
-        beforeEach(async function () {
-            this.manager = await RegistryAccessManagerMock.new({ from: owner })
-        })
-
-        it('sets the manager', async function () {
-            await this.registry.setManager(this.manager.address, { from: owner })
-
-            let manager = await this.registry.accessManager()
-            assert.equal(manager, this.manager.address)
-        })
-
-        it('emits an event', async function () {
-            let oldManager = await this.registry.accessManager()
-            const { logs } = await this.registry.setManager(this.manager.address, { from: owner })
-
-            assert.equal(logs.length, 1)
-            assert.equal(logs[0].event, 'SetManager')
-            assert.equal(logs[0].args.oldManager, oldManager)
-            assert.equal(logs[0].args.newManager, this.manager.address)
-        })
-
-        it('cannot be called by non-owner', async function () {
-            await assertRevert(this.registry.setManager(this.manager.address, { from: anotherAccount }))
-        })
-    })
     describe('no ether and no tokens', function () {
         beforeEach(async function () {
             this.token = await MockToken.new( this.registry.address, 100, { from: owner })
