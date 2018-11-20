@@ -59,6 +59,10 @@ contract Registry is Claimable {
         return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value != 0;
     }
 
+    function hasEitherAttribute(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
+        return attributes[_who][_attribute1].value != 0 || attributes[_who][_attribute2].value != 0;
+    }
+
     function bothHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
         return attributes[_who1][_attribute].value != 0 && attributes[_who2][_attribute].value != 0;
     }
