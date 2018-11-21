@@ -89,12 +89,8 @@ contract Registry is Claimable {
         return (data.value, data.notes, data.adminAddr, data.timestamp);
     }
 
-    function getAttributeValue(address _who, bytes32 _attribute) public view returns (uint256 _value) {
-        _value = attributes[_who][_attribute].value;
-    }
-
-    function getAttributeNotes(address _who, bytes32 _attribute) public view returns (bytes32) {
-        return attributes[_who][_attribute].notes;
+    function getAttributeValue(address _who, bytes32 _attribute) public view returns (uint256) {
+        return attributes[_who][_attribute].value;
     }
 
     function getAttributeAdminAddr(address _who, bytes32 _attribute) public view returns (address) {

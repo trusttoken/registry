@@ -24,7 +24,10 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             assert.equal(hasAttr, true)
             const value = await this.registry.getAttributeValue(anotherAccount, prop1)
             assert.equal(Number(value),3)
-
+            const adminAddress = await this.registry.getAttributeAdminAddr(anotherAccount, prop1)
+            assert.equal(adminAddress, owner)
+            const timestamp = await this.registry.getAttributeTimestamp(anotherAccount, prop1)
+            assert.equal(timestamp,web3.eth.getBlock(receipt.blockNumber).timestamp)
         })
 
         it('sets only desired attribute', async function () {
@@ -63,6 +66,101 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             const canWriteProp1 = await this.registry.writeAttributeFor(prop1);
             await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
+        })
+    })
+
+    describe('Attribute get Combination', async function(){
+        const attr1 = "foo"
+        const attr2 = "bar"
+        const attr3 = "blarg"
+        
+    // function hasBothAttributes(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
+    //     return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value != 0;
+    // }
+
+    // function hasEitherAttribute(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
+    //     return attributes[_who][_attribute1].value != 0 || attributes[_who][_attribute2].value != 0;
+    // }
+
+    // function hasAttribute1ButNotAttribute2(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
+    //     return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value == 0;
+    // }
+
+    // function bothHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
+    //     return attributes[_who1][_attribute].value != 0 && attributes[_who2][_attribute].value != 0;
+    // }
+    
+    // function eitherHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
+    //     return attributes[_who1][_attribute].value != 0 || attributes[_who2][_attribute].value != 0;
+    // }
+
+    // function haveEitherAttribute(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
+    //     return attributes[_who1][_attribute1].value != 0 || attributes[_who2][_attribute2].value != 0;
+    // }
+
+        it('has both attributes', async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            await this.registry.setAttribute(oneHundred, attr2, 1, notes, { from: owner })
+            const result = await this.registry.hasBothAttributes(oneHundred, attr1, attr2)
+            assert.equal(result,true)
+        })
+
+        it('does not have both attributes', async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            await this.registry.setAttribute(oneHundred, attr2, 1, notes, { from: owner })
+            const result = await this.registry.hasBothAttributes(oneHundred, attr1, attr3)
+            assert.equal(result,false)
+        })
+
+        it('has either attributes',async function(){
+            await this.registry.setAttribute(oneHundred, attr3, 1, notes, { from: owner })
+            const result = await this.registry.hasEitherAttribute(oneHundred, attr1, attr3)
+            assert.equal(result,true)
+        })
+
+        it('has neither attributes',async function(){
+            const result = await this.registry.hasEitherAttribute(oneHundred, attr1, attr3)
+            assert.equal(result,false)
+        })
+
+        it('either have attributes',async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            const result = await this.registry.eitherHaveAttribute(oneHundred, anotherAccount, attr1)
+            assert.equal(result,true)
+        })
+
+        it('neither have attributes',async function(){
+            const result = await this.registry.eitherHaveAttribute(oneHundred, anotherAccount, attr3)
+            assert.equal(result,false)
+        })
+
+        it('has one but not the other',async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            let result = await this.registry.hasAttribute1ButNotAttribute2(oneHundred, attr1, attr3)
+            assert.equal(result,true)
+            await this.registry.setAttribute(oneHundred, attr3, 1, notes, { from: owner })
+            result = await this.registry.hasAttribute1ButNotAttribute2(oneHundred, attr1, attr3)
+            assert.equal(result,false)
+        })
+
+        it('both have Attribute', async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            await this.registry.setAttribute(anotherAccount, attr1, 1, notes, { from: owner })
+            const result = await this.registry.bothHaveAttribute(oneHundred, anotherAccount, attr1)
+            assert.equal(result,true)
+        })
+
+        it ('have attributes', async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            await this.registry.setAttribute(anotherAccount, attr3, 1, notes, { from: owner })
+            const result = await this.registry.haveAttributes(oneHundred, attr1, anotherAccount, attr3)
+            assert.equal(result,true)
+        })
+
+        it ('have either attributes', async function(){
+            await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
+            const result = await this.registry.haveEitherAttribute(anotherAccount, attr3, oneHundred, attr1)
+            assert.equal(result,true)
         })
     })
 
