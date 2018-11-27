@@ -12,9 +12,8 @@ see the relevant .sol files.
 
 Stores arbitrary attributes for users, such as whether they have
 passed a KYC/AML check.
-Allows the owner to
-set all attributes, and also allows the owner to choose other
-users that can set specific attributes.
+Allows the owner to set all attributes, and also allows the owner 
+to choose other users that can set specific attributes.
 
 ### HasRegistry.sol
 
