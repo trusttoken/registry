@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "solidity-coverage"
+    "test": "./node_modules/.bin/solidity-coverage"
   },
   "author": "",
   "license": "ISC",
