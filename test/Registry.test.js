@@ -11,6 +11,29 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     
     beforeEach(async function () {
         this.registry = await Registry.new({ from: owner })
+        await this.registry.initialize({ from: owner })
+    })
+
+    describe('ownership functions', async function(){
+        it('cannot be reinitialized', async function () {
+            await assertRevert(this.registry.initialize({ from: owner }))
+        })
+        it('can transfer ownership', async function () {
+            await this.registry.transferOwnership(anotherAccount,{ from: owner })
+            assert.equal(await this.registry.pendingOwner(),anotherAccount)
+        })
+        it('non owner cannot transfer ownership', async function () {
+            await assertRevert(this.registry.transferOwnership(anotherAccount,{ from: anotherAccount }))
+        })
+        it('can claim ownership', async function () {
+            await this.registry.transferOwnership(anotherAccount,{ from: owner })
+            await this.registry.claimOwnership({ from: anotherAccount })
+            assert.equal(await this.registry.owner(),anotherAccount)
+        })
+        it('only pending owner can claim ownership', async function () {
+            await this.registry.transferOwnership(anotherAccount,{ from: owner })
+            await assertRevert(this.registry.claimOwnership({ from: oneHundred }))
+        })
     })
     describe('read/write', function () {
         it('works for owner', async function () {
@@ -62,10 +85,17 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             await this.registry.setAttribute(anotherAccount, prop1, 3, notes, { from: oneHundred })
         })
 
+        it('owner can let others write attribute value', async function () {
+            const canWriteProp1 = await this.registry.writeAttributeFor(prop1);
+            await this.registry.setAttributeValue(oneHundred, canWriteProp1, 3, { from: owner })
+            await this.registry.setAttributeValue(anotherAccount, prop1, 3, { from: oneHundred })
+        })
+
         it('others can only write what they are allowed to', async function () {
             const canWriteProp1 = await this.registry.writeAttributeFor(prop1);
             await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
+            await assertRevert(this.registry.setAttributeValue(anotherAccount, prop2, 3, { from: oneHundred }))
         })
     })
 
@@ -74,30 +104,6 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         const attr2 = "bar"
         const attr3 = "blarg"
         
-    // function hasBothAttributes(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-    //     return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value != 0;
-    // }
-
-    // function hasEitherAttribute(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-    //     return attributes[_who][_attribute1].value != 0 || attributes[_who][_attribute2].value != 0;
-    // }
-
-    // function hasAttribute1ButNotAttribute2(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-    //     return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value == 0;
-    // }
-
-    // function bothHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
-    //     return attributes[_who1][_attribute].value != 0 && attributes[_who2][_attribute].value != 0;
-    // }
-    
-    // function eitherHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
-    //     return attributes[_who1][_attribute].value != 0 || attributes[_who2][_attribute].value != 0;
-    // }
-
-    // function haveEitherAttribute(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
-    //     return attributes[_who1][_attribute1].value != 0 || attributes[_who2][_attribute2].value != 0;
-    // }
-
         it('has both attributes', async function(){
             await this.registry.setAttribute(oneHundred, attr1, 1, notes, { from: owner })
             await this.registry.setAttribute(oneHundred, attr2, 1, notes, { from: owner })

@@ -12,28 +12,19 @@ see the relevant .sol files.
 
 Stores arbitrary attributes for users, such as whether they have
 passed a KYC/AML check.
-
-### RegistryAccessManager.sol
-
-Interface for contracts that determine who is allowed to set which attributes in the Registry.
-
-### DefaultRegistryAccessManager.sol
-
-Initial implementation of a RegistryAccessManager. Allows the owner to
-set all attributes, and also allows the owner to choose other
-users that can set specific attributes.
+Allows the owner to set all attributes, and also allows the owner 
+to choose other users that can set specific attributes.
 
 ### HasRegistry.sol
 
 Extended by other contracts that want to have a registry that is
 replacable by the owner.
 
-## Validation Token
+## Testing
 
-### ValidationToken.sol
-
-This implements the ERC20 interface so that it is easy for users to
-interact with it from their standard wallets, but the point of it is
-not actually to be a cryptocurrency but rather to allow users that
-transfer its tokens to prove that they own their account (and can
-transfer tokens from it).
+To run the tests and generate a code coverage report:
+```bash
+npm install
+npm test
+```
+ 
