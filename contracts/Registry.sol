@@ -1,9 +1,8 @@
 pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/ownership/Claimable.sol";
 
-contract Registry is Claimable {
+contract Registry {
     struct AttributeData {
         uint256 value;
         bytes32 notes;
