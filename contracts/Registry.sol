@@ -10,6 +10,10 @@ contract Registry is Claimable {
         address adminAddr;
         uint256 timestamp;
     }
+    
+    address public owner;
+    address public pendingOwner;
+    bool public initialized;
 
     // Stores arbitrary attributes for users. An example use case is an ERC20
     // token that requires its users to go through a KYC/AML check - in this case
@@ -21,15 +25,21 @@ contract Registry is Claimable {
     // The logic governing who is allowed to set what attributes is abstracted as
     // this accessManager, so that it may be replaced by the owner as needed
 
-
     bytes32 public constant WRITE_PERMISSION = keccak256("canWriteTo-");
 
-    constructor() public {
-    }
-
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
     event SetAttribute(address indexed who, bytes32 attribute, uint256 value, bytes32 notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
+
+    function initialize() public {
+        require(!initialized, "already initialized");
+        owner = msg.sender;
+        initialized = true;
+    }
 
     function writeAttributeFor(bytes32 _attribute)
     public pure returns (bytes32) {
@@ -48,6 +58,12 @@ contract Registry is Claimable {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
+    }
+
+    function setAttributeValue(address _who, bytes32 _attribute, uint256 _value) public {
+        require(confirmWrite(_attribute, msg.sender));
+        attributes[_who][_attribute] = AttributeData(_value, "", msg.sender, block.timestamp);
+        emit SetAttribute(_who, _attribute, _value, "", msg.sender);
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
@@ -108,5 +124,47 @@ contract Registry is Claimable {
     function reclaimToken(ERC20 token, address _to) external onlyOwner {
         uint256 balance = token.balanceOf(this);
         token.transfer(_to, balance);
+    }
+
+    /**
+    * @dev sets the original `owner` of the contract to the sender
+    * at construction. Must then be reinitialized 
+    */
+    constructor() public {
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), owner);
+    }
+
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner, "only Owner");
+        _;
+    }
+
+    /**
+    * @dev Modifier throws if called by any account other than the pendingOwner.
+    */
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner);
+        _;
+    }
+
+    /**
+    * @dev Allows the current owner to set the pendingOwner address.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        pendingOwner = newOwner;
+    }
+
+    /**
+    * @dev Allows the pendingOwner address to finalize the transfer.
+    */
+    function claimOwnership() public onlyPendingOwner {
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
     }
 }
