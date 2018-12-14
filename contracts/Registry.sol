@@ -50,6 +50,12 @@ contract Registry is Claimable {
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
     }
 
+    function setAttributeValue(address _who, bytes32 _attribute, uint256 _value) public {
+        require(confirmWrite(_attribute, msg.sender));
+        attributes[_who][_attribute].value = _value;
+        emit SetAttribute(_who, _attribute, _value, 0x0, msg.sender);
+    }
+
     // Returns true if the uint256 value stored for this attribute is non-zero
     function hasAttribute(address _who, bytes32 _attribute) public view returns (bool) {
         return attributes[_who][_attribute].value != 0;
