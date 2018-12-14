@@ -40,8 +40,7 @@ contract Registry {
         initialized = true;
     }
 
-    function writeAttributeFor(bytes32 _attribute)
-    public pure returns (bytes32) {
+    function writeAttributeFor(bytes32 _attribute) public pure returns (bytes32) {
         return keccak256(WRITE_PERMISSION ^ _attribute);
     }
 
