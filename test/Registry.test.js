@@ -6,6 +6,9 @@ const BN = require('bn.js')
 
 contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const prop1 = web3.sha3("foo")
+    const IS_BLACKLISTED = 'isBlacklisted';
+    const IS_REGISTERED_CONTRACT = 'isRegisteredContract';
+    const IS_DEPOSIT_ADDRESS = 'isDepositAddress';
     const prop2 = "bar"
     const notes = "blarg"
     
@@ -168,6 +171,69 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             const result = await this.registry.haveEitherAttribute(anotherAccount, attr3, oneHundred, attr1)
             assert.equal(result,true)
         })
+    })
+
+    describe('requireCanTransfer and requireCanTransferFrom', async function() {
+        it('return _to and false when nothing set', async function() {
+            const result = await this.registry.requireCanTransfer(oneHundred, anotherAccount);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], false);
+            const resultFrom = await this.registry.requireCanTransferFrom(owner, oneHundred, anotherAccount);
+            assert.equal(resultFrom[0], anotherAccount);
+            assert.equal(resultFrom[1], false);
+        });
+        it('revert when _from is blacklisted', async function() {
+            await this.registry.setAttributeValue(oneHundred, IS_BLACKLISTED, 1, { from: owner });
+            await assertRevert(this.registry.requireCanTransfer(oneHundred, anotherAccount));
+            await assertRevert(this.registry.requireCanTransferFrom(owner, oneHundred, anotherAccount));
+        });
+        it('revert when _to is blacklisted', async function() {
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            await assertRevert(this.registry.requireCanTransfer(oneHundred, anotherAccount));
+            await assertRevert(this.registry.requireCanTransferFrom(owner, oneHundred, anotherAccount));
+        });
+        it('revert when _sender is blacklisted', async function() {
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            await assertRevert(this.registry.requireCanTransferFrom(anotherAccount, oneHundred, owner));
+        });
+        it('handle deposit addresses', async function() {
+            const isDepositAddressBefore = await this.registry.isDepositAddress(anotherAccount);
+            assert.equal(isDepositAddressBefore, false);
+            await this.registry.setAttributeValue(anotherAccount.slice(0, -5), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
+            const isDepositAddressAfter = await this.registry.isDepositAddress(anotherAccount);
+            assert.equal(isDepositAddressAfter, true);
+            const result = await this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + '00000');
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], false);
+            const resultFrom = await this.registry.requireCanTransferFrom(oneHundred, oneHundred, anotherAccount.slice(0, -5) + 'fffff');
+            assert.equal(resultFrom[0], anotherAccount);
+            assert.equal(resultFrom[1], false);
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            await assertRevert(this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
+            await assertRevert(this.registry.requireCanTransferFrom(oneHundred, oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
+        });
+        it('return true when recipient is a registered contract', async function() {
+            await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, anotherAccount, { from: owner });
+            const result = await this.registry.requireCanTransfer(oneHundred, anotherAccount);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], true);
+            const resultFrom = await this.registry.requireCanTransferFrom(owner, oneHundred, anotherAccount);
+            assert.equal(resultFrom[0], anotherAccount);
+            assert.equal(resultFrom[1], true);
+        });
+        it ('handles deposit addresses that are registered contracts', async function() {
+            await this.registry.setAttributeValue(anotherAccount.slice(0, -5), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, anotherAccount, { from: owner });
+            const resultContract = await this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + '00000');
+            assert.equal(resultContract[0], anotherAccount);
+            assert.equal(resultContract[1], true);
+            const resultFromContract = await this.registry.requireCanTransferFrom(oneHundred, oneHundred, anotherAccount.slice(0, -5) + 'fffff');
+            assert.equal(resultFromContract[0], anotherAccount);
+            assert.equal(resultFromContract[1], true);
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            await assertRevert(this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
+            await assertRevert(this.registry.requireCanTransferFrom(oneHundred, oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
+        });
     })
 
     describe('no ether and no tokens', function () {
