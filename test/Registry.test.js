@@ -202,6 +202,10 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             await this.registry.setAttributeValue(anotherAccount.slice(0, -5), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
             const isDepositAddressAfter = await this.registry.isDepositAddress(anotherAccount);
             assert.equal(isDepositAddressAfter, true);
+            const depositAddress = await this.registry.getDepositAddress(anotherAccount);
+            assert.equal(depositAddress, anotherAccount);
+            const depositAddress0 = await this.registry.getDepositAddress(anotherAccount.slice(0, -5) + '00000');
+            assert.equal(depositAddress0, anotherAccount);
             const result = await this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + '00000');
             assert.equal(result[0], anotherAccount);
             assert.equal(result[1], false);
