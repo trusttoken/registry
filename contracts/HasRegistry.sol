@@ -1,6 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "./Registry.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 // Superclass for contracts that have a registry that can be set by their owners
 contract HasRegistry is Ownable {
