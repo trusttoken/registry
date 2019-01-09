@@ -28,6 +28,8 @@ contract Registry {
     bytes32 public constant IS_BLACKLISTED = "isBlacklisted";
     bytes32 public constant IS_DEPOSIT_ADDRESS = "isDepositAddress"; 
     bytes32 public constant IS_REGISTERED_CONTRACT = "isRegisteredContract"; 
+    bytes32 public constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML"
+    bytes32 public constant CAN_BURN = "canBurn";
 
     event OwnershipTransferred(
         address indexed previousOwner,
@@ -121,6 +123,21 @@ contract Registry {
     function requireCanTransferFrom(address _sender, address _from, address _to) public view returns (address, bool) {
         require (attributes[_sender][IS_BLACKLISTED].value == 0, "blacklisted");
         return requireCanTransfer(_from, _to);
+    }
+
+    function requireCanMint(address _to) public view returns (address, bool) {
+        require (attributes[_to][HAS_PASSED_KYC_AML].value != 0);
+        require (attributes[_to][IS_BLACKLISTED].value == 0, "blacklisted");
+        uint256 depositAddressValue = attributes[address(uint256(_to) >> 20)][IS_DEPOSIT_ADDRESS].value;
+        if (depositAddressValue != 0) {
+            _to = address(depositAddressValue);
+        }
+        return (_to, attributes[_to][IS_REGISTERED_CONTRACT].value != 0);
+    }
+
+    function requireCanBurn(address _from) public view {
+        require (attributes[_from][CAN_BURN].value != 0);
+        require (attributes[_from][IS_BLACKLISTED].value == 0);
     }
 
     // Returns the exact value of the attribute, as well as its metadata
