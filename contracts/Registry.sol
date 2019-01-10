@@ -28,7 +28,7 @@ contract Registry {
     bytes32 public constant IS_BLACKLISTED = "isBlacklisted";
     bytes32 public constant IS_DEPOSIT_ADDRESS = "isDepositAddress"; 
     bytes32 public constant IS_REGISTERED_CONTRACT = "isRegisteredContract"; 
-    bytes32 public constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML"
+    bytes32 public constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML";
     bytes32 public constant CAN_BURN = "canBurn";
 
     event OwnershipTransferred(
