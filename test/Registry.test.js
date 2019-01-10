@@ -285,6 +285,25 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
     })
 
+    describe('requireCanBurn', async function() {
+        it('reverts without CAN_BURN flag', async function() {
+            assertRevert(this.registry.requireCanBurn(owner));
+            assertRevert(this.registry.requireCanBurn(oneHundred));
+            assertRevert(this.registry.requireCanBurn(anotherAccount));
+        })
+        it('works with CAN_BURN flag', async function () {
+            await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
+            await this.registry.requireCanBurn(anotherAccount);
+            assertRevert(this.registry.requireCanBurn(owner));
+        })
+        it('reverts for blacklisted accounts', async function() {
+            await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            assertRevert(this.registry.requireCanBurn(anotherAccount));
+            assertRevert(this.registry.requireCanBurn(owner));
+        })
+    })
+
     describe('no ether and no tokens', function () {
         beforeEach(async function () {
             this.token = await MockToken.new( this.registry.address, 100, { from: owner })
