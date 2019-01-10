@@ -9,6 +9,8 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const IS_BLACKLISTED = 'isBlacklisted';
     const IS_REGISTERED_CONTRACT = 'isRegisteredContract';
     const IS_DEPOSIT_ADDRESS = 'isDepositAddress';
+    const HAS_PASSED_KYC_AML = "hasPassedKYC/AML";
+    const CAN_BURN = "canBurn";
     const prop2 = "bar"
     const notes = "blarg"
     
@@ -238,6 +240,68 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             await assertRevert(this.registry.requireCanTransfer(oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
             await assertRevert(this.registry.requireCanTransferFrom(oneHundred, oneHundred, anotherAccount.slice(0, -5) + 'eeeee'));
         });
+    })
+
+    describe('requireCanMint', async function() {
+        it('reverts without KYCAML flag', async function() {
+            assertRevert(this.registry.requireCanMint(owner));
+            assertRevert(this.registry.requireCanMint(oneHundred));
+            assertRevert(this.registry.requireCanMint(anotherAccount));
+        })
+        it('reverts for blacklisted recipient', async function() {
+            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            assertRevert(this.registry.requireCanMint(anotherAccount));
+        })
+        it('returns false for whitelisted accounts', async function() {
+            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
+            const result = await this.registry.requireCanMint(anotherAccount);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], false);
+        })
+        it('returns deposit address', async function() {
+            const depositAddress = anotherAccount.slice(0, -5) + '00055';
+            await this.registry.setAttributeValue(depositAddress, HAS_PASSED_KYC_AML, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount.slice(0, -5), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
+            const result = await this.registry.requireCanMint(depositAddress);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], false);
+        })
+        it('returns true for registered', async function() {
+            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, 1, { from: owner });
+            const result = await this.registry.requireCanMint(anotherAccount);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], true);
+        })
+        it('handles registered deposit addresses', async function() {
+            const depositAddress = anotherAccount.slice(0, -5) + '00055';
+            await this.registry.setAttributeValue(depositAddress, HAS_PASSED_KYC_AML, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount.slice(0, -5), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
+            const result = await this.registry.requireCanMint(depositAddress);
+            assert.equal(result[0], anotherAccount);
+            assert.equal(result[1], true);
+        })
+    })
+
+    describe('requireCanBurn', async function() {
+        it('reverts without CAN_BURN flag', async function() {
+            assertRevert(this.registry.requireCanBurn(owner));
+            assertRevert(this.registry.requireCanBurn(oneHundred));
+            assertRevert(this.registry.requireCanBurn(anotherAccount));
+        })
+        it('works with CAN_BURN flag', async function () {
+            await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
+            await this.registry.requireCanBurn(anotherAccount);
+            assertRevert(this.registry.requireCanBurn(owner));
+        })
+        it('reverts for blacklisted accounts', async function() {
+            await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
+            await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
+            assertRevert(this.registry.requireCanBurn(anotherAccount));
+            assertRevert(this.registry.requireCanBurn(owner));
+        })
     })
 
     describe('no ether and no tokens', function () {
