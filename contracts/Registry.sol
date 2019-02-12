@@ -145,15 +145,6 @@ contract Registry {
     }
 
     /**
-    * @dev sets the original `owner` of the contract to the sender
-    * at construction. Must then be reinitialized 
-    */
-    constructor() public {
-        owner = msg.sender;
-        emit OwnershipTransferred(address(0), owner);
-    }
-
-    /**
     * @dev Throws if called by any account other than the owner.
     */
     modifier onlyOwner() {
