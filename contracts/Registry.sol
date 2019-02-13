@@ -13,7 +13,7 @@ contract Registry {
     // never remove any storage variables
     address public owner;
     address public pendingOwner;
-    bool private initialized;
+    bool initialized;
 
     // Stores arbitrary attributes for users. An example use case is an ERC20
     // token that requires its users to go through a KYC/AML check - in this case
