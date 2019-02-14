@@ -1,5 +1,5 @@
 import assertRevert from './helpers/assertRevert'
-const Registry = artifacts.require('Registry')
+const RegistryMock = artifacts.require('RegistryMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
 const BN = require('bn.js')
@@ -15,7 +15,7 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     const notes = "blarg"
     
     beforeEach(async function () {
-        this.registry = await Registry.new({ from: owner })
+        this.registry = await RegistryMock.new({ from: owner })
         await this.registry.initialize({ from: owner })
     })
 
