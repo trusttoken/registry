@@ -7,3 +7,6 @@ allFiredEvents
 coverage
 coverage.json
 coverageEnv
+
+# VIM
+*.swp
