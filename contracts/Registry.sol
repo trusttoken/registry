@@ -39,10 +39,6 @@ contract Registry {
     event SetAttribute(address indexed who, bytes32 attribute, uint256 value, bytes32 notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
-    function writeAttributeFor(bytes32 _attribute) internal pure returns (bytes32) {
-        return keccak256(WRITE_PERMISSION ^ _attribute);
-    }
-
     // Allows a write if either a) the writer is that Registry's owner, or
     // b) the writer is writing to attribute foo and that writer already has
     // the canWriteTo-foo attribute set (in that same Registry)
