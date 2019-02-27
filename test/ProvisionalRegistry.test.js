@@ -1,22 +1,12 @@
-import assertRevert from './helpers/assertRevert'
-const RegistryMock = artifacts.require('ProvisionalRegistryMock')
-const MockToken = artifacts.require("MockToken")
-const ForceEther = artifacts.require("ForceEther")
+const ProvisionalRegistryMock = artifacts.require('ProvisionalRegistryMock')
 const RegistryTokenMock = artifacts.require('RegistryTokenMock')
 
-const BN = web3.utils.toBN;
-const writeAttributeFor = require('./helpers/writeAttributeFor.js')
 const bytes32 = require('./helpers/bytes32.js')
 
 contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]) {
     const prop1 = web3.utils.sha3("foo")
-    const IS_BLACKLISTED = bytes32('isBlacklisted');
-    const IS_REGISTERED_CONTRACT = bytes32('isRegisteredContract');
-    const IS_DEPOSIT_ADDRESS = bytes32('isDepositAddress');
-    const HAS_PASSED_KYC_AML = bytes32("hasPassedKYC/AML");
     const CAN_BURN = bytes32("canBurn");
     const prop2 = bytes32("bar")
-    const notes = bytes32("blarg")
     
     beforeEach(async function () {
         this.registry = await RegistryMock.new({ from: owner })

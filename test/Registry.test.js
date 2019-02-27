@@ -1,5 +1,5 @@
 import assertRevert from './helpers/assertRevert'
-const RegistryMock = artifacts.require('ProvisionalRegistryMock')
+const RegistryMock = artifacts.require('RegistryMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
 const RegistryTokenMock = artifacts.require('RegistryTokenMock')
