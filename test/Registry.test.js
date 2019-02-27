@@ -2,6 +2,8 @@ import assertRevert from './helpers/assertRevert'
 const RegistryMock = artifacts.require('RegistryMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
+const RegistryTokenMock = artifacts.require('RegistryTokenMock')
+
 const BN = web3.utils.toBN;
 const writeAttributeFor = require('./helpers/writeAttributeFor.js')
 const bytes32 = require('./helpers/bytes32.js')
@@ -19,6 +21,9 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
     beforeEach(async function () {
         this.registry = await RegistryMock.new({ from: owner })
         await this.registry.initialize({ from: owner })
+        this.registryToken = await RegistryTokenMock.new({ from: owner })
+        await this.registryToken.setRegistry(this.registry.address, { from: owner })
+        await this.registry.setClone(this.registryToken.address);
     })
 
     describe('ownership functions', async function(){
@@ -103,6 +108,25 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
             await this.registry.setAttribute(oneHundred, canWriteProp1, 3, notes, { from: owner })
             await assertRevert(this.registry.setAttribute(anotherAccount, prop2, 3, notes, { from: oneHundred }))
             await assertRevert(this.registry.setAttributeValue(anotherAccount, prop2, 3, { from: oneHundred }))
+        })
+    })
+
+    describe('sync', function() {
+        beforeEach(async function() {
+            await this.registry.setAttributeValue(oneHundred, prop1, 3, { from: owner });
+        })
+        it('writes sync', async function() {
+            assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
+        })
+        it('syncs prior writes', async function() {
+            let token2 = await RegistryTokenMock.new({ from: owner });
+            await token2.setRegistry(this.registry.address, { from: owner });
+            await this.registry.setClone(token2.address);
+            assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
+            assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
+
+            await this.registry.syncAttributes([oneHundred], [prop1]);
+            assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
         })
     })
 

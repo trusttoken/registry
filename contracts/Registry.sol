@@ -2,6 +2,10 @@ pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
+interface RegistryClone {
+    function syncAttributeValue(address _who, bytes32 _attribute, uint256 _value) external;
+}
+
 contract Registry {
     struct AttributeData {
         uint256 value;
@@ -46,17 +50,23 @@ contract Registry {
         return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
     }
 
+    function clone() internal view returns (RegistryClone) {
+        return RegistryClone(0x0000000000085d4780B73119b644AE5ecd22b376);
+    }
+
     // Writes are allowed only if the accessManager approves
     function setAttribute(address _who, bytes32 _attribute, uint256 _value, bytes32 _notes) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
+        clone().syncAttributeValue(_who, _attribute, _value);
     }
 
     function setAttributeValue(address _who, bytes32 _attribute, uint256 _value) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, "", msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, "", msg.sender);
+        clone().syncAttributeValue(_who, _attribute, _value);
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
@@ -119,6 +129,15 @@ contract Registry {
     function reclaimToken(ERC20 token, address _to) external onlyOwner {
         uint256 balance = token.balanceOf(this);
         token.transfer(_to, balance);
+    }
+
+    function syncAttributes(address[] _addresses, bytes32[] _attributes) external {
+        RegistryClone replica = clone();
+        for (uint i = 0; i < _attributes.length; i++) {
+            address who = _addresses[i];
+            bytes32 attribute = _attributes[i];
+            replica.syncAttributeValue(who, attribute, attributes[who][attribute].value);
+        }
     }
 
     /**
