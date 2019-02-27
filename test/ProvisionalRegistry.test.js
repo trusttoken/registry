@@ -1,3 +1,4 @@
+import registryTests from './Registry'
 const ProvisionalRegistryMock = artifacts.require('ProvisionalRegistryMock')
 const RegistryTokenMock = artifacts.require('RegistryTokenMock')
 
@@ -20,6 +21,7 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
         await this.registryToken.setRegistry(this.registry.address, { from: owner })
         await this.registry.setClone(this.registryToken.address);
     })
+    registryTests([owner, oneHundred, anotherAccount])
 
     describe('sync', function() {
         beforeEach(async function() {
