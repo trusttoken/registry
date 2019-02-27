@@ -1,5 +1,6 @@
 pragma solidity ^0.4.23;
 import "../Registry.sol";
+import "../ProvisionalRegistry.sol";
 
 contract RegistryMock is Registry {
 
@@ -27,4 +28,7 @@ contract RegistryMock is Registry {
     function clone() internal view returns (RegistryClone) {
         return _clone;
     }
+}
+
+contract ProvisionalRegistryMock is RegistryMock, ProvisionalRegistry {
 }
