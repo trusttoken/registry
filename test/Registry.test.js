@@ -111,25 +111,6 @@ contract('Registry', function ([_, owner, oneHundred, anotherAccount]) {
         })
     })
 
-    describe('sync', function() {
-        beforeEach(async function() {
-            await this.registry.setAttributeValue(oneHundred, prop1, 3, { from: owner });
-        })
-        it('writes sync', async function() {
-            assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
-        })
-        it('syncs prior writes', async function() {
-            let token2 = await RegistryTokenMock.new({ from: owner });
-            await token2.setRegistry(this.registry.address, { from: owner });
-            await this.registry.setClone(token2.address);
-            assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
-            assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
-
-            await this.registry.syncAttributes([oneHundred], [prop1]);
-            assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
-        })
-    })
-
     describe('requireCanTransfer and requireCanTransferFrom', async function() {
         it('return _to and false when nothing set', async function() {
             const result = await this.registry.requireCanTransfer(oneHundred, anotherAccount);
