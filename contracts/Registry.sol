@@ -21,16 +21,16 @@ contract Registry {
     // that account can use the token. This mapping stores that value (1, in the
     // example) as well as which validator last set the value and at what time,
     // so that e.g. the check can be renewed at appropriate intervals.
-    mapping(address => mapping(bytes32 => AttributeData)) public attributes;
+    mapping(address => mapping(bytes32 => AttributeData)) attributes;
     // The logic governing who is allowed to set what attributes is abstracted as
     // this accessManager, so that it may be replaced by the owner as needed
 
-    bytes32 public constant WRITE_PERMISSION = keccak256("canWriteTo-");
-    bytes32 public constant IS_BLACKLISTED = "isBlacklisted";
-    bytes32 public constant IS_DEPOSIT_ADDRESS = "isDepositAddress"; 
-    bytes32 public constant IS_REGISTERED_CONTRACT = "isRegisteredContract"; 
-    bytes32 public constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML";
-    bytes32 public constant CAN_BURN = "canBurn";
+    bytes32 constant WRITE_PERMISSION = keccak256("canWriteTo-");
+    bytes32 constant IS_BLACKLISTED = "isBlacklisted";
+    bytes32 constant IS_DEPOSIT_ADDRESS = "isDepositAddress";
+    bytes32 constant IS_REGISTERED_CONTRACT = "isRegisteredContract";
+    bytes32 constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML";
+    bytes32 constant CAN_BURN = "canBurn";
 
     event OwnershipTransferred(
         address indexed previousOwner,
@@ -39,14 +39,10 @@ contract Registry {
     event SetAttribute(address indexed who, bytes32 attribute, uint256 value, bytes32 notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
 
-    function writeAttributeFor(bytes32 _attribute) public pure returns (bytes32) {
-        return keccak256(WRITE_PERMISSION ^ _attribute);
-    }
-
     // Allows a write if either a) the writer is that Registry's owner, or
     // b) the writer is writing to attribute foo and that writer already has
     // the canWriteTo-foo attribute set (in that same Registry)
-    function confirmWrite(bytes32 _attribute, address _admin) public view returns (bool) {
+    function confirmWrite(bytes32 _attribute, address _admin) internal view returns (bool) {
         return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
     }
 
@@ -66,42 +62,6 @@ contract Registry {
     // Returns true if the uint256 value stored for this attribute is non-zero
     function hasAttribute(address _who, bytes32 _attribute) public view returns (bool) {
         return attributes[_who][_attribute].value != 0;
-    }
-
-    function hasBothAttributes(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-        return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value != 0;
-    }
-
-    function hasEitherAttribute(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-        return attributes[_who][_attribute1].value != 0 || attributes[_who][_attribute2].value != 0;
-    }
-
-    function hasAttribute1ButNotAttribute2(address _who, bytes32 _attribute1, bytes32 _attribute2) public view returns (bool) {
-        return attributes[_who][_attribute1].value != 0 && attributes[_who][_attribute2].value == 0;
-    }
-
-    function bothHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
-        return attributes[_who1][_attribute].value != 0 && attributes[_who2][_attribute].value != 0;
-    }
-    
-    function eitherHaveAttribute(address _who1, address _who2, bytes32 _attribute) public view returns (bool) {
-        return attributes[_who1][_attribute].value != 0 || attributes[_who2][_attribute].value != 0;
-    }
-
-    function haveAttributes(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
-        return attributes[_who1][_attribute1].value != 0 && attributes[_who2][_attribute2].value != 0;
-    }
-
-    function haveEitherAttribute(address _who1, bytes32 _attribute1, address _who2, bytes32 _attribute2) public view returns (bool) {
-        return attributes[_who1][_attribute1].value != 0 || attributes[_who2][_attribute2].value != 0;
-    }
-
-    function isDepositAddress(address _who) public view returns (bool) {
-        return attributes[address(uint256(_who) >> 20)][IS_DEPOSIT_ADDRESS].value != 0;
-    }
-
-    function getDepositAddress(address _who) public view returns (address) {
-        return address(attributes[address(uint256(_who) >> 20)][IS_DEPOSIT_ADDRESS].value);
     }
 
     function requireCanTransfer(address _from, address _to) public view returns (address, bool) {
