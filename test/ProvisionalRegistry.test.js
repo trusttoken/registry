@@ -118,14 +118,14 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
 
     describe('requireCanMint', async function() {
         it('reverts without KYCAML flag', async function() {
-            assertRevert(this.registry.requireCanMint(owner));
-            assertRevert(this.registry.requireCanMint(oneHundred));
-            assertRevert(this.registry.requireCanMint(anotherAccount));
+            await assertRevert(this.registry.requireCanMint(owner));
+            await assertRevert(this.registry.requireCanMint(oneHundred));
+            await assertRevert(this.registry.requireCanMint(anotherAccount));
         })
         it('reverts for blacklisted recipient', async function() {
             await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
             await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
-            assertRevert(this.registry.requireCanMint(anotherAccount));
+            await assertRevert(this.registry.requireCanMint(anotherAccount));
         })
         it('returns false for whitelisted accounts', async function() {
             await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
@@ -161,20 +161,20 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
 
     describe('requireCanBurn', async function() {
         it('reverts without CAN_BURN flag', async function() {
-            assertRevert(this.registry.requireCanBurn(owner));
-            assertRevert(this.registry.requireCanBurn(oneHundred));
-            assertRevert(this.registry.requireCanBurn(anotherAccount));
+            await assertRevert(this.registry.requireCanBurn(owner));
+            await assertRevert(this.registry.requireCanBurn(oneHundred));
+            await assertRevert(this.registry.requireCanBurn(anotherAccount));
         })
         it('works with CAN_BURN flag', async function () {
             await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
             await this.registry.requireCanBurn(anotherAccount);
-            assertRevert(this.registry.requireCanBurn(owner));
+            await assertRevert(this.registry.requireCanBurn(owner));
         })
         it('reverts for blacklisted accounts', async function() {
             await this.registry.setAttributeValue(anotherAccount, CAN_BURN, 1, { from: owner });
             await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
-            assertRevert(this.registry.requireCanBurn(anotherAccount));
-            assertRevert(this.registry.requireCanBurn(owner));
+            await assertRevert(this.registry.requireCanBurn(anotherAccount));
+            await assertRevert(this.registry.requireCanBurn(owner));
         })
     })
 
