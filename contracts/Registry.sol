@@ -2,6 +2,10 @@ pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
+interface RegistryClone {
+    function syncAttributeValue(address _who, bytes32 _attribute, uint256 _value) external;
+}
+
 contract Registry {
     struct AttributeData {
         uint256 value;
@@ -46,17 +50,23 @@ contract Registry {
         return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
     }
 
+    function clone() internal view returns (RegistryClone) {
+        return RegistryClone(0x0000000000085d4780B73119b644AE5ecd22b376);
+    }
+
     // Writes are allowed only if the accessManager approves
     function setAttribute(address _who, bytes32 _attribute, uint256 _value, bytes32 _notes) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
+        clone().syncAttributeValue(_who, _attribute, _value);
     }
 
     function setAttributeValue(address _who, bytes32 _attribute, uint256 _value) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, "", msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, "", msg.sender);
+        clone().syncAttributeValue(_who, _attribute, _value);
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
@@ -64,35 +74,6 @@ contract Registry {
         return attributes[_who][_attribute].value != 0;
     }
 
-    function requireCanTransfer(address _from, address _to) public view returns (address, bool) {
-        require (attributes[_from][IS_BLACKLISTED].value == 0, "blacklisted");
-        uint256 depositAddressValue = attributes[address(uint256(_to) >> 20)][IS_DEPOSIT_ADDRESS].value;
-        if (depositAddressValue != 0) {
-            _to = address(depositAddressValue);
-        }
-        require (attributes[_to][IS_BLACKLISTED].value == 0, "blacklisted");
-        return (_to, attributes[_to][IS_REGISTERED_CONTRACT].value != 0);
-    }
-
-    function requireCanTransferFrom(address _sender, address _from, address _to) public view returns (address, bool) {
-        require (attributes[_sender][IS_BLACKLISTED].value == 0, "blacklisted");
-        return requireCanTransfer(_from, _to);
-    }
-
-    function requireCanMint(address _to) public view returns (address, bool) {
-        require (attributes[_to][HAS_PASSED_KYC_AML].value != 0);
-        require (attributes[_to][IS_BLACKLISTED].value == 0, "blacklisted");
-        uint256 depositAddressValue = attributes[address(uint256(_to) >> 20)][IS_DEPOSIT_ADDRESS].value;
-        if (depositAddressValue != 0) {
-            _to = address(depositAddressValue);
-        }
-        return (_to, attributes[_to][IS_REGISTERED_CONTRACT].value != 0);
-    }
-
-    function requireCanBurn(address _from) public view {
-        require (attributes[_from][CAN_BURN].value != 0);
-        require (attributes[_from][IS_BLACKLISTED].value == 0);
-    }
 
     // Returns the exact value of the attribute, as well as its metadata
     function getAttribute(address _who, bytes32 _attribute) public view returns (uint256, bytes32, address, uint256) {
@@ -121,7 +102,7 @@ contract Registry {
         token.transfer(_to, balance);
     }
 
-    /**
+   /**
     * @dev Throws if called by any account other than the owner.
     */
     modifier onlyOwner() {
