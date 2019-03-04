@@ -168,7 +168,7 @@ function registryTests([owner, oneHundred, anotherAccount]) {
                 assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
                 assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
 
-                await this.registry.syncAttributes([prop1], [oneHundred]);
+                await this.registry.syncAttribute(prop1, 0, [oneHundred]);
                 assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
             })
             it('syncs prior attribute', async function() {
@@ -177,27 +177,25 @@ function registryTests([owner, oneHundred, anotherAccount]) {
                 await this.registry.subscribe(prop1, token2.address, {from: owner});
                 assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
                 assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
-                await this.registry.syncAttributes([prop1], [oneHundred]);
+                await this.registry.syncAttribute(prop1, 0, [oneHundred]);
                 assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
             })
             it('syncs multiple prior writes', async function() {
+                await this.registry.setAttributeValue(oneHundred, prop1, 3, { from: owner});
+                await this.registry.setAttributeValue(anotherAccount, prop1, 5, { from: owner});
+                await this.registry.setAttributeValue(owner, prop1, 6, { from: owner});
 
-                await this.registry.setAttributeValue(oneHundred, prop2, 4, { from: owner});
-                await this.registry.setAttributeValue(anotherAccount, prop2, 5, { from: owner});
-                await this.registry.setAttributeValue(owner, CAN_BURN, 6, { from: owner});
                 let token2 = await RegistryTokenMock.new({ from: owner });
                 await token2.setRegistry(this.registry.address, { from: owner });
                 await this.registry.subscribe(prop1, token2.address, { from: owner });
-                await this.registry.subscribe(prop2, token2.address, { from: owner });
-                await this.registry.subscribe(CAN_BURN, token2.address, { from: owner });
+                await this.registry.syncAttribute(prop1, 2, [oneHundred, anotherAccount, owner]);
                 assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1), { from: owner });
                 assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
 
-                await this.registry.syncAttributes([prop1, prop2, prop2, CAN_BURN], [oneHundred, oneHundred, anotherAccount, owner]);
+                await this.registry.syncAttribute(prop1, 1, [oneHundred, anotherAccount, owner]);
                 assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
-                assert.equal(4, await token2.getAttributeValue(oneHundred, prop2));
-                assert.equal(5, await token2.getAttributeValue(anotherAccount, prop2));
-                assert.equal(6, await token2.getAttributeValue(owner, CAN_BURN));
+                assert.equal(5, await token2.getAttributeValue(anotherAccount, prop1));
+                assert.equal(6, await token2.getAttributeValue(owner, prop1));
             })
         })
 

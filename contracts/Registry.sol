@@ -112,22 +112,10 @@ contract Registry {
         return attributes[_who][_attribute].timestamp;
     }
 
-    function syncAttributes(bytes32[] _attributes, address[] _addresses) external {
-        for (uint i = 0; i < _attributes.length; i++) {
-            address who = _addresses[i];
-            bytes32 attribute = _attributes[i];
-            RegistryClone[] storage targets = subscribers[attribute];
-            uint256 index = targets.length;
-            while (index --> 0) {
-                targets[index].syncAttributeValue(who, attribute, attributes[who][attribute].value);
-            }
-        }
-    }
-
-    function syncAttribute(bytes32 _attribute, address[] _addresses) external {
+    function syncAttribute(bytes32 _attribute, uint256 _startIndex, address[] _addresses) external {
         RegistryClone[] storage targets = subscribers[_attribute];
         uint256 index = targets.length;
-        while (index --> 0) {
+        while (index --> _startIndex) {
             RegistryClone target = targets[index];
             for (uint256 i = _addresses.length; i --> 0; ) {
                 address who = _addresses[i];
