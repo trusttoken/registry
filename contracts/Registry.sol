@@ -28,13 +28,8 @@ contract Registry {
     mapping(address => mapping(bytes32 => AttributeData)) attributes;
     // The logic governing who is allowed to set what attributes is abstracted as
     // this accessManager, so that it may be replaced by the owner as needed
-
     bytes32 constant WRITE_PERMISSION = keccak256("canWriteTo-");
-    bytes32 constant IS_BLACKLISTED = "isBlacklisted";
-    bytes32 constant IS_DEPOSIT_ADDRESS = "isDepositAddress";
-    bytes32 constant IS_REGISTERED_CONTRACT = "isRegisteredContract";
-    bytes32 constant HAS_PASSED_KYC_AML = "hasPassedKYC/AML";
-    bytes32 constant CAN_BURN = "canBurn";
+    mapping(bytes32 => RegistryClone[]) subscribers;
 
     event OwnershipTransferred(
         address indexed previousOwner,
@@ -42,6 +37,8 @@ contract Registry {
     );
     event SetAttribute(address indexed who, bytes32 attribute, uint256 value, bytes32 notes, address indexed adminAddr);
     event SetManager(address indexed oldManager, address indexed newManager);
+    event StartSubscription(bytes32 indexed attribute, RegistryClone indexed subscriber);
+    event StopSubscription(bytes32 indexed attribute, RegistryClone indexed subscriber);
 
     // Allows a write if either a) the writer is that Registry's owner, or
     // b) the writer is writing to attribute foo and that writer already has
@@ -50,23 +47,45 @@ contract Registry {
         return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
     }
 
-    function clone() internal view returns (RegistryClone) {
-        return RegistryClone(0x0000000000085d4780B73119b644AE5ecd22b376);
-    }
-
     // Writes are allowed only if the accessManager approves
     function setAttribute(address _who, bytes32 _attribute, uint256 _value, bytes32 _notes) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, _notes, msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, _notes, msg.sender);
-        clone().syncAttributeValue(_who, _attribute, _value);
+
+        RegistryClone[] storage targets = subscribers[_attribute];
+        uint256 index = targets.length;
+        while (index --> 0) {
+            targets[index].syncAttributeValue(_who, _attribute, _value);
+        }
+    }
+
+    function subscribe(bytes32 _attribute, RegistryClone _syncer) external onlyOwner {
+        subscribers[_attribute].push(_syncer);
+        emit StartSubscription(_attribute, _syncer);
+    }
+
+    function unsubscribe(bytes32 _attribute, uint256 _index) external onlyOwner {
+        uint256 length = subscribers[_attribute].length;
+        require(_index < length);
+        emit StopSubscription(_attribute, subscribers[_attribute][_index]);
+        subscribers[_attribute][_index] = subscribers[_attribute][length - 1];
+        subscribers[_attribute].length = length - 1;
+    }
+
+    function subscriberCount(bytes32 _attribute) public view returns (uint256) {
+        return subscribers[_attribute].length;
     }
 
     function setAttributeValue(address _who, bytes32 _attribute, uint256 _value) public {
         require(confirmWrite(_attribute, msg.sender));
         attributes[_who][_attribute] = AttributeData(_value, "", msg.sender, block.timestamp);
         emit SetAttribute(_who, _attribute, _value, "", msg.sender);
-        clone().syncAttributeValue(_who, _attribute, _value);
+        RegistryClone[] storage targets = subscribers[_attribute];
+        uint256 index = targets.length;
+        while (index --> 0) {
+            targets[index].syncAttributeValue(_who, _attribute, _value);
+        }
     }
 
     // Returns true if the uint256 value stored for this attribute is non-zero
@@ -91,6 +110,30 @@ contract Registry {
 
     function getAttributeTimestamp(address _who, bytes32 _attribute) public view returns (uint256) {
         return attributes[_who][_attribute].timestamp;
+    }
+
+    function syncAttributes(bytes32[] _attributes, address[] _addresses) external {
+        for (uint i = 0; i < _attributes.length; i++) {
+            address who = _addresses[i];
+            bytes32 attribute = _attributes[i];
+            RegistryClone[] storage targets = subscribers[attribute];
+            uint256 index = targets.length;
+            while (index --> 0) {
+                targets[index].syncAttributeValue(who, attribute, attributes[who][attribute].value);
+            }
+        }
+    }
+
+    function syncAttribute(bytes32 _attribute, address[] _addresses) external {
+        RegistryClone[] storage targets = subscribers[_attribute];
+        uint256 index = targets.length;
+        while (index --> 0) {
+            RegistryClone target = targets[index];
+            for (uint256 i = _addresses.length; i --> 0; ) {
+                address who = _addresses[i];
+                target.syncAttributeValue(who, _attribute, attributes[who][_attribute].value);
+            }
+        }
     }
 
     function reclaimEther(address _to) external onlyOwner {
