@@ -1,15 +1,18 @@
+const RegistryTokenMock = artifacts.require('RegistryTokenMock')
 const MockToken = artifacts.require("MockToken")
 const ForceEther = artifacts.require("ForceEther")
 
 import assertRevert from './helpers/assertRevert'
 const writeAttributeFor = require('./helpers/writeAttributeFor.js')
 const bytes32 = require('./helpers/bytes32.js')
+const BN = web3.utils.toBN;
 
 function registryTests([owner, oneHundred, anotherAccount]) {
     describe('--Registry Tests--', function () {
         const prop1 = web3.utils.sha3("foo")
         const prop2 = bytes32("bar")
         const notes = bytes32("blarg")
+        const CAN_BURN = bytes32("canBurn");
         
         describe('ownership functions', function(){
             it('cannot be reinitialized', async function () {
@@ -129,6 +132,73 @@ function registryTests([owner, oneHundred, anotherAccount]) {
             })
 
         })
+
+        describe('sync', function() {
+            beforeEach(async function() {
+                this.registryToken = await RegistryTokenMock.new({ from: owner })
+                await this.registryToken.setRegistry(this.registry.address, { from: owner })
+                await this.registry.subscribe(prop1, this.registryToken.address, { from: owner });
+                await this.registry.setAttributeValue(oneHundred, prop1, 3, { from: owner });
+            })
+            it('writes sync', async function() {
+                assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
+            })
+            it('subscription emits event', async function() {
+                const { logs } = await this.registry.subscribe(prop2, this.registryToken.address, { from: owner });
+                assert.equal(logs.length, 1);
+                assert.equal(logs[0].args.attribute, prop2);
+                assert.equal(logs[0].args.subscriber, this.registryToken.address);
+                assert(BN(1).eq(await this.registry.subscriberCount(prop2)), 'should have 1 subscriber');
+            })
+            it('unsubscription emits event', async function() {
+                const { logs } = await this.registry.unsubscribe(prop1, 0, { from: owner });
+                assert.equal(logs.length, 1);
+                assert.equal(logs[0].args.attribute, prop1);
+                assert.equal(logs[0].args.subscriber, this.registryToken.address);
+            })
+            it('can unsubscribe', async function() {
+                assert(BN(1).eq(await this.registry.subscriberCount(prop1)), 'should have 1 subscriber');
+                await this.registry.unsubscribe(prop1, 0, { from: owner });
+                assert(BN(0).eq(await this.registry.subscriberCount(prop1)), 'should have 0 subscribers');
+            })
+            it('syncs prior writes', async function() {
+                let token2 = await RegistryTokenMock.new({ from: owner });
+                await token2.setRegistry(this.registry.address, { from: owner });
+                await this.registry.subscribe(prop1, token2.address, {from: owner});
+                assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
+                assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
+
+                await this.registry.syncAttribute(prop1, 0, [oneHundred]);
+                assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
+            })
+            it('syncs prior attribute', async function() {
+                let token2 = await RegistryTokenMock.new({ from: owner });
+                await token2.setRegistry(this.registry.address, { from: owner });
+                await this.registry.subscribe(prop1, token2.address, {from: owner});
+                assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1));
+                assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
+                await this.registry.syncAttribute(prop1, 0, [oneHundred]);
+                assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
+            })
+            it('syncs multiple prior writes', async function() {
+                await this.registry.setAttributeValue(oneHundred, prop1, 3, { from: owner});
+                await this.registry.setAttributeValue(anotherAccount, prop1, 5, { from: owner});
+                await this.registry.setAttributeValue(owner, prop1, 6, { from: owner});
+
+                let token2 = await RegistryTokenMock.new({ from: owner });
+                await token2.setRegistry(this.registry.address, { from: owner });
+                await this.registry.subscribe(prop1, token2.address, { from: owner });
+                await this.registry.syncAttribute(prop1, 2, [oneHundred, anotherAccount, owner]);
+                assert.equal(3, await this.registryToken.getAttributeValue(oneHundred, prop1), { from: owner });
+                assert.equal(0, await token2.getAttributeValue(oneHundred, prop1));
+
+                await this.registry.syncAttribute(prop1, 1, [oneHundred, anotherAccount, owner]);
+                assert.equal(3, await token2.getAttributeValue(oneHundred, prop1));
+                assert.equal(5, await token2.getAttributeValue(anotherAccount, prop1));
+                assert.equal(6, await token2.getAttributeValue(owner, prop1));
+            })
+        })
+
     })
 }
 

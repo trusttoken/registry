@@ -4,7 +4,6 @@ import "../ProvisionalRegistry.sol";
 
 contract RegistryMock is Registry {
 
-    RegistryClone _clone;
 
     /**
     * @dev sets the original `owner` of the contract to the sender
@@ -19,14 +18,6 @@ contract RegistryMock is Registry {
         require(!initialized, "already initialized");
         owner = msg.sender;
         initialized = true;
-    }
-
-    function setClone(RegistryClone __clone) public {
-        _clone = __clone;
-    }
-
-    function clone() internal view returns (RegistryClone) {
-        return _clone;
     }
 }
 
