@@ -9,7 +9,6 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
     const IS_BLACKLISTED = bytes32('isBlacklisted');
     const IS_REGISTERED_CONTRACT = bytes32('isRegisteredContract');
     const IS_DEPOSIT_ADDRESS = bytes32('isDepositAddress');
-    const HAS_PASSED_KYC_AML = bytes32("hasPassedKYC/AML");
     const CAN_BURN = bytes32("canBurn");
     const prop2 = bytes32("bar")
     
@@ -79,32 +78,23 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
     })
 
     describe('requireCanMint', async function() {
-        it('reverts without KYCAML flag', async function() {
-            await assertRevert(this.registry.requireCanMint(owner));
-            await assertRevert(this.registry.requireCanMint(oneHundred));
-            await assertRevert(this.registry.requireCanMint(anotherAccount));
-        })
         it('reverts for blacklisted recipient', async function() {
-            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
             await this.registry.setAttributeValue(anotherAccount, IS_BLACKLISTED, 1, { from: owner });
             await assertRevert(this.registry.requireCanMint(anotherAccount));
         })
         it('returns false for whitelisted accounts', async function() {
-            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
             const result = await this.registry.requireCanMint(anotherAccount);
             assert.equal(result[0], anotherAccount);
             assert.equal(result[1], false);
         })
         it('returns deposit address', async function() {
             const depositAddress = web3.utils.toChecksumAddress(anotherAccount.slice(0, -5) + '00055');
-            await this.registry.setAttributeValue(depositAddress, HAS_PASSED_KYC_AML, 1, { from: owner });
             await this.registry.setAttributeValue(web3.utils.toChecksumAddress('0x00000' + anotherAccount.slice(2, -5)), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
             const result = await this.registry.requireCanMint(depositAddress);
             assert.equal(result[0], anotherAccount);
             assert.equal(result[1], false);
         })
         it('returns true for registered', async function() {
-            await this.registry.setAttributeValue(anotherAccount, HAS_PASSED_KYC_AML, 1, { from: owner });
             await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, 1, { from: owner });
             const result = await this.registry.requireCanMint(anotherAccount);
             assert.equal(result[0], anotherAccount);
@@ -112,7 +102,6 @@ contract('ProvisionalRegistry', function ([_, owner, oneHundred, anotherAccount]
         })
         it('handles registered deposit addresses', async function() {
             const depositAddress = web3.utils.toChecksumAddress(anotherAccount.slice(0, -5) + '00055');
-            await this.registry.setAttributeValue(depositAddress, HAS_PASSED_KYC_AML, 1, { from: owner });
             await this.registry.setAttributeValue(anotherAccount, IS_REGISTERED_CONTRACT, 1, { from: owner });
             await this.registry.setAttributeValue(web3.utils.toChecksumAddress('0x00000' + anotherAccount.slice(2, -5)), IS_DEPOSIT_ADDRESS, anotherAccount, { from: owner });
             const result = await this.registry.requireCanMint(depositAddress);
