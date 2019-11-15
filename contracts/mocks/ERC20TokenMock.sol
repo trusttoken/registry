@@ -1,9 +1,8 @@
-pragma solidity ^0.4.23;
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+pragma solidity ^0.5.13;
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-contract MockToken is StandardToken {
+contract MockToken is ERC20 {
   constructor(address _initialAccount, uint256 _initialBalance ) public {
-    totalSupply_ = _initialBalance;
-    balances[_initialAccount] = _initialBalance;
+    _mint(_initialAccount, _initialBalance);
   }
 }

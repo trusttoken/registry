@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.5.13;
 
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -11,6 +11,6 @@ contract HasRegistry is Ownable {
 
     function setRegistry(Registry _registry) onlyOwner public {
         registry = _registry;
-        emit SetRegistry(registry);
+        emit SetRegistry(address(registry));
     }
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.5.13;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
@@ -44,7 +44,7 @@ contract Registry {
     // b) the writer is writing to attribute foo and that writer already has
     // the canWriteTo-foo attribute set (in that same Registry)
     function confirmWrite(bytes32 _attribute, address _admin) internal view returns (bool) {
-        return (_admin == owner || hasAttribute(_admin, keccak256(WRITE_PERMISSION ^ _attribute)));
+        return (_admin == owner || hasAttribute(_admin, keccak256(abi.encodePacked(WRITE_PERMISSION ^ _attribute))));
     }
 
     // Writes are allowed only if the accessManager approves
@@ -112,7 +112,7 @@ contract Registry {
         return attributes[_who][_attribute].timestamp;
     }
 
-    function syncAttribute(bytes32 _attribute, uint256 _startIndex, address[] _addresses) external {
+    function syncAttribute(bytes32 _attribute, uint256 _startIndex, address[] calldata _addresses) external {
         RegistryClone[] storage targets = subscribers[_attribute];
         uint256 index = targets.length;
         while (index --> _startIndex) {
@@ -124,12 +124,12 @@ contract Registry {
         }
     }
 
-    function reclaimEther(address _to) external onlyOwner {
+    function reclaimEther(address payable _to) external onlyOwner {
         _to.transfer(address(this).balance);
     }
 
     function reclaimToken(ERC20 token, address _to) external onlyOwner {
-        uint256 balance = token.balanceOf(this);
+        uint256 balance = token.balanceOf(address(this));
         token.transfer(_to, balance);
     }
 
