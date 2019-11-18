@@ -7,11 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "test": "solidity-coverage"
+    "test": "truffle run coverage"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
+  "devDependencies": {
+    "solidity-coverage": "^0.7.0-beta.2"
+  },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
@@ -19,9 +21,8 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "bn.js": "^4.11.8",
-    "ganache-cli": "6.1.0",
+    "ganache-cli": "6.8.0-istanbul.0",
     "openzeppelin-solidity": "2.4.0",
-    "solidity-coverage": "0.6.7",
     "truffle": "5.0.44",
     "truffle-hdwallet-provider": "0.0.3"
   }
