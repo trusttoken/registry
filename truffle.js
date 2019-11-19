@@ -4,14 +4,6 @@ require('babel-polyfill');
 var HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
-  solc: {
-    version: "0.5.13",
-    evmVersion: "istanbul",
-    optimizer: {
-      enabled: true,
-      runs: 20000
-    }
-  },
   compilers: {
     solc: {
       version: "0.5.13",
