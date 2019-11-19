@@ -5,7 +5,8 @@ var HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
   solc: {
-    version: "0.4.23",
+    version: "0.5.13",
+    evmVersion: "istanbul",
     optimizer: {
       enabled: true,
       runs: 20000
@@ -13,13 +14,15 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: "0.4.23",
+      version: "0.5.13",
+      evmVersion: "istanbul",
       optimizer: {
         enabled: true,
         runs: 20000
       }
     },
   },
+  plugins: ["solidity-coverage"],
   networks: {
     development: {
       host: "localhost",
