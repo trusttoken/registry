@@ -1,20 +1,23 @@
 {
   "name": "registry",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
-  "main": "truffle.js",
   "directories": {
     "test": "test"
   },
+  "files": [
+    "contracts"
+  ],
   "scripts": {
     "test": "truffle run coverage"
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "solidity-coverage": "^0.7.0-beta.2"
-  },
   "dependencies": {
+    "openzeppelin-solidity": "2.4.0"
+  },
+  "devDependencies": {
+    "solidity-coverage": "^0.7.0-beta.2",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-2": "^6.18.0",
@@ -22,7 +25,6 @@
     "babel-register": "^6.26.0",
     "bn.js": "^4.11.8",
     "ganache-cli": "6.8.0-istanbul.0",
-    "openzeppelin-solidity": "2.4.0",
     "truffle": "5.0.44",
     "truffle-hdwallet-provider": "0.0.3"
   }
