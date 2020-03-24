@@ -12,7 +12,11 @@
     "test": "truffle run coverage"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type" : "git",
+    "url" : "git+https://github.com/trusttoken/registry.git"
+  },
   "dependencies": {
     "openzeppelin-solidity": "2.4.0"
   },
