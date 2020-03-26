@@ -3,4 +3,4 @@ async function assertBalance(token, account, value) {
     assert.equal(balance, value)
 }
 
-export default assertBalance
+module.exports = assertBalance

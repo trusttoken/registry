@@ -1,6 +1,6 @@
 {
   "name": "@trusttoken/registry",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "directories": {
     "test": "test"
@@ -15,8 +15,8 @@
   "author": "",
   "license": "MIT",
   "repository": {
-    "type" : "git",
-    "url" : "git+https://github.com/trusttoken/registry.git"
+    "type": "git",
+    "url": "git+https://github.com/trusttoken/registry.git"
   },
   "dependencies": {
     "openzeppelin-solidity": "2.4.0"

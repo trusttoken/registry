@@ -1,4 +1,4 @@
-export default async promise => {
+module.exports = async function assertRevert(promise) {
   try {
     await promise;
     assert.fail('Expected revert not received');
